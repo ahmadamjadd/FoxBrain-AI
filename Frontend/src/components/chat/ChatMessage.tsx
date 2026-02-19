@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import remarkGfm from "remark-gfm";
+import hljs from "highlight.js";
+import "highlight.js/styles/github-dark.min.css";
 
 interface ChatMessageProps {
   message: Message;
@@ -34,7 +36,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         {isUser ? (
           <p className="whitespace-pre-wrap text-lg leading-relaxed">{message.content}</p>
         ) : (
-          <div className="prose prose-lg dark:prose-invert max-w-none text-lg leading-relaxed">
+          <div className="prose prose-lg dark:prose-invert max-w-none text-lg leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-blockquote:text-foreground/90 prose-th:text-foreground prose-td:text-foreground prose-a:text-primary">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -42,37 +44,37 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
                   return <p className="mb-4 leading-relaxed">{children}</p>;
                 },
                 h1({ children }) {
-                  return <h1 className="text-2xl font-bold mb-4 mt-6">{children}</h1>;
+                  return <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0">{children}</h1>;
                 },
                 h2({ children }) {
-                  return <h2 className="text-xl font-bold mb-3 mt-5">{children}</h2>;
+                  return <h2 className="text-xl font-bold mb-3 mt-5 first:mt-0">{children}</h2>;
                 },
                 h3({ children }) {
-                  return <h3 className="text-lg font-bold mb-3 mt-4">{children}</h3>;
+                  return <h3 className="text-lg font-bold mb-3 mt-4 first:mt-0">{children}</h3>;
                 },
                 h4({ children }) {
-                  return <h4 className="font-bold mb-2 mt-3">{children}</h4>;
+                  return <h4 className="font-bold mb-2 mt-3 first:mt-0">{children}</h4>;
                 },
                 h5({ children }) {
-                  return <h5 className="font-semibold mb-2 mt-2">{children}</h5>;
+                  return <h5 className="font-semibold mb-2 mt-2 first:mt-0">{children}</h5>;
                 },
                 h6({ children }) {
-                  return <h6 className="font-semibold text-sm mb-2 mt-2">{children}</h6>;
+                  return <h6 className="font-semibold text-sm mb-2 mt-2 first:mt-0">{children}</h6>;
                 },
                 br() {
                   return <br className="mb-2" />;
                 },
                 ul({ children }) {
-                  return <ul className="list-disc list-inside mb-4 space-y-2 pl-2">{children}</ul>;
+                  return <ul className="list-disc list-outside mb-4 space-y-1.5 pl-6 [&>li]:pl-1">{children}</ul>;
                 },
                 ol({ children }) {
-                  return <ol className="list-decimal list-inside mb-4 space-y-2 pl-2">{children}</ol>;
+                  return <ol className="list-decimal list-outside mb-4 space-y-1.5 pl-6 [&>li]:pl-1">{children}</ol>;
                 },
                 li({ children }) {
-                  return <li className="ml-2">{children}</li>;
+                  return <li className="leading-relaxed [&>ul]:mt-2 [&>ol]:mt-2">{children}</li>;
                 },
                 blockquote({ children }) {
-                  return <blockquote className="border-l-4 border-primary/50 pl-4 py-2 mb-4 italic text-muted-foreground bg-muted/30 rounded">{children}</blockquote>;
+                  return <blockquote className="border-l-4 border-primary/50 pl-4 py-2 mb-4 italic text-foreground/90 bg-muted/30 rounded">{children}</blockquote>;
                 },
                 strong({ children }) {
                   return <strong className="font-bold">{children}</strong>;
@@ -169,6 +171,17 @@ function CodeBlock({ children, language }: { children: string; language?: string
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const highlightedCode = (() => {
+    try {
+      if (language && hljs.getLanguage(language)) {
+        return hljs.highlight(children, { language }).value;
+      }
+      return hljs.highlightAuto(children).value;
+    } catch {
+      return children;
+    }
+  })();
+
   return (
     <div className="relative group my-4 rounded-lg overflow-hidden border border-border">
       <div className="flex items-center justify-between bg-muted px-4 py-2 text-sm text-muted-foreground">
@@ -178,8 +191,8 @@ function CodeBlock({ children, language }: { children: string; language?: string
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="p-4 overflow-x-auto bg-muted/50 text-sm">
-        <code>{children}</code>
+      <pre className="p-4 overflow-x-auto text-sm hljs">
+        <code dangerouslySetInnerHTML={{ __html: highlightedCode }} />
       </pre>
     </div>
   );
