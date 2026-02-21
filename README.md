@@ -7,11 +7,11 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/n8n-Workflow%20Automation-FF6D5A?style=flat-square&logo=n8n&logoColor=white" />
-  <img src="https://img.shields.io/badge/Pinecone-Vector%20DB-00C7B7?style=flat-square" />
-  <img src="https://img.shields.io/badge/Google%20Gemini-LLM-4285F4?style=flat-square&logo=google&logoColor=white" />
-  <img src="https://img.shields.io/badge/HuggingFace-Embeddings-FFD21E?style=flat-square&logo=huggingface&logoColor=black" />
+  <img src="https://img.shields.io/badge/Oracle%20Cloud-n8n%20Hosting-F80000?style=flat-square&logo=oracle&logoColor=white" />
+  <img src="https://img.shields.io/badge/Caddy-SSL%2FTLS-004820?style=flat-square" />
+  <img src="https://img.shields.io/badge/Vercel-Frontend-000000?style=flat-square&logo=vercel&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
   <img src="https://img.shields.io/badge/React-Frontend-61DAFB?style=flat-square&logo=react&logoColor=black" />
-  <img src="https://img.shields.io/badge/Oracle%20Cloud-Hosting-F80000?style=flat-square&logo=oracle&logoColor=white" />
 </p>
 
 ---
@@ -26,6 +26,7 @@
 - [Data Ingestion Pipeline](#-data-ingestion-pipeline)
   - [Parent Workflow](#parent-workflow--foxtrot_dataflow_parent)
   - [Child Workflow](#child-workflow--foxtrot_dataflow_child)
+- [Deploying to Vercel](#-deploying-to-vercel-password-reset)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -82,16 +83,16 @@ FoxBrain will:
 │                        FoxBrain Architecture                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│   ┌──────────┐    ┌──────────┐    ┌──────────────────────────┐     │
-│   │  GitHub   │───▶│  n8n     │───▶│  Pinecone Vector DB      │     │
-│   │  Repos    │    │  Pipeline│    │  (Index: foxtrot)        │     │
-│   └──────────┘    └──────────┘    └────────────┬─────────────┘     │
-│                                                 │                   │
-│                                                 ▼                   │
-│   ┌──────────┐    ┌──────────┐    ┌──────────────────────────┐     │
-│   │  React   │───▶│  RAG     │───▶│  AWS Bedrock              │     │
-│   │  Frontend│    │  Agent   │    │  + Vector Store Retrieval │     │
-│   └──────────┘    └──────────┘    └──────────────────────────┘     │
+│   ┌──────────┐    ┌──────────────────────┐    ┌─────────────────┐  │
+│   │  GitHub   │───▶│  n8n (Oracle Cloud)  │───▶│  Pinecone       │  │
+│   │  Repos    │    │  + Caddy (SSL/TLS)   │    │  Vector DB      │  │
+│   └──────────┘    └──────────┬───────────┘    └────────┬────────┘  │
+│                              │                           │          │
+│                              ▼                           ▼          │
+│   ┌──────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   │  React Frontend  │───▶│  RAG Agent (n8n)  │◀───│  Supabase       │
+│   │  (Vercel)        │    │  + Gemini LLM     │    │  DB + Auth      │
+│   └──────────────────┘    └──────────────────┘    └─────────────────┘
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -126,9 +127,11 @@ SDES_Chatbot/
 
 | Technology | Purpose |
 |---|---|
-| **n8n** | Workflow automation platform for data ingestion pipeline and RAG agent orchestration |
-| **AWS Bedrock** | For Large Language Model for generating answers and embeddings |
-| **Pinecone** | Vector database for storing and retrieving document embeddings |
+| **n8n** | Workflow automation for data ingestion pipeline and RAG agent orchestration |
+| **Oracle Cloud** | Hosting platform for n8n workflows |
+| **Caddy** | Reverse proxy and automatic SSL/TLS for n8n |
+| **Pinecone** | Vector database for document embeddings and RAG retrieval |
+| **Google Gemini** | LLM for generating answers |
 | **HuggingFace Inference API** | Embedding generation for document chunks |
 | **GitHub API** | Source repository access for automated knowledge ingestion |
 
@@ -141,27 +144,23 @@ SDES_Chatbot/
 | **Vite** | Build tool and development server |
 | **TailwindCSS** | Utility-first CSS framework |
 | **shadcn/ui** | Reusable UI components library |
-| **React Hook Form** | Form state management |
-| **Radix UI** | Accessible component primitives |
-| **Sonner** | Toast notifications |
-| **TanStack Query** | Server state management |
-| **Supabase Client** | Database and authentication integration |
+| **Vercel** | Frontend hosting and deployment |
 
-### **Infrastructure & Hosting**
+### **Database & Authentication**
 
 | Technology | Purpose |
 |---|---|
-| **Oracle Cloud** | Cloud hosting platform for n8n workflows |
-| **GitHub** | Source code repository and version control |
+| **Supabase** | PostgreSQL database for conversations and user data |
+| **Supabase Auth** | User authentication, signup, login, and password reset |
 
-### **Development & Testing**
+### **Infrastructure**
 
 | Technology | Purpose |
 |---|---|
-| **Vitest** | Unit testing framework |
-| **ESLint** | Code quality and linting |
-| **PostCSS** | CSS processing and transformation |
-| **Bun** | Fast JavaScript runtime and package manager |
+| **Oracle Cloud** | n8n server hosting |
+| **Caddy** | TLS termination and reverse proxy for n8n |
+| **Vercel** | Frontend hosting |
+| **GitHub** | Source code and version control |
 
 ---
 
@@ -328,7 +327,7 @@ This project is licensed under the terms specified in the [LICENSE](LICENSE) fil
 ---
 
 <p align="center">
-  <b>Built with ❤️ by Team Foxtrot GIKI — SDES Subteam</b>
-  <br/>
   <em>Because no question is a dumb question, especially when a bot is answering it. 🦊</em>
+  <br/>
+  <b>Team Foxtrot GIKI — SDES Subteam</b>
 </p>
