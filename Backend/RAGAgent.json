@@ -3,20 +3,8 @@
   "nodes": [
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
-      "position": [
-        -480,
-        64
-      ],
-      "id": "0705f867-e223-4bde-b6c0-95d7c7f0934a",
-      "name": "When chat message received",
-      "webhookId": "ccaff835-f4bb-474b-a717-d584e385b6a2"
-    },
-    {
-      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}\n\nConversation history:\n{{ ($json.body.history || []).map(h => `${h.role}: ${h.content}`).join('\\n') }}",
         "options": {
           "systemMessage": "\"You are FoxBrain, Team Foxtrot's technical assistant. Answer based on the retrieved context from the vector store. If the context is partially relevant, do your best to answer. Only say you don't have the information if the retrieved context is completely unrelated. Always cite the file name and repository when referencing code.\""
         }
@@ -24,71 +12,11 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        208,
+        0,
         0
       ],
-      "id": "cdcf4cd8-23d7-49b4-84ae-79874bd2fd5f",
+      "id": "995f492c-6ebb-4d52-b846-30e7117040d8",
       "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "description": "Use this tool to search Team Foxtrot's entire codebase and documentation stored in Pinecone. It contains:\n\n- Python source code (.py) — drone control scripts, flight logic, computer vision, data processing\n- Lua scripts (.lua) — ArduPilot autopilot scripting for drone flight modes and automation\n- Markdown documentation (.md) — READMEs, setup guides, project explanations, ROS installation instructions\n- Jupyter Notebooks (.ipynb) — data analysis, ML experiments, research notebooks\n- YAML/YML configuration files (.yaml, .yml) — ROS configs, project settings, CI/CD pipelines\n- Plain text files (.txt) — notes, logs, references\n- Waypoint files (.waypoints) — drone mission waypoint definitions\n- README files — project overviews, installation steps, dependency lists, usage instructions, and contributor guides for every repository\n\nUse this tool for ANY question about Team Foxtrot's projects, including: how code works, function implementations, setup instructions, project structure, drone configurations, ROS setup, DroneKit usage, MAVLink communication, flight controller logic, and getting started guides. Always use this tool before answering — do not guess or use general knowledge.",
-        "topK": 20
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
-      "typeVersion": 1.1,
-      "position": [
-        -448,
-        448
-      ],
-      "id": "2b40f62f-740c-48fa-a47f-8f5f6eec3736",
-      "name": "Answer questions with a vector store"
-    },
-    {
-      "parameters": {
-        "pineconeIndex": {
-          "__rl": true,
-          "value": "foxtrot",
-          "mode": "list",
-          "cachedResultName": "foxtrot"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
-      "typeVersion": 1.3,
-      "position": [
-        -448,
-        288
-      ],
-      "id": "71e277a9-41c4-45d4-b2fe-235d2c9c572c",
-      "name": "Pinecone Vector Store",
-      "credentials": {
-        "pineconeApi": {
-          "id": "JS4gvyLCu4MxqByn",
-          "name": "PineconeApi account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {
-          "temperature": 0.3
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        -160,
-        544
-      ],
-      "id": "9a9f567f-ef47-4616-af3a-4d2437246f98",
-      "name": "Google Gemini Chat Model1",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "kwAThRqPghCdQMfv",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
     },
     {
       "parameters": {
@@ -98,14 +26,14 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
       "typeVersion": 1,
       "position": [
-        416,
+        208,
         288
       ],
-      "id": "ce2216a8-aacd-4908-a36e-5a4f279beaba",
+      "id": "afd77755-40e1-443c-b551-95ac9bc4c4cd",
       "name": "Embeddings HuggingFace Inference",
       "credentials": {
         "huggingFaceApi": {
-          "id": "1rngl2euAMMxLRF0",
+          "id": "Puj4ABqqOm5gnV5h",
           "name": "HuggingFaceApi account"
         }
       }
@@ -119,30 +47,17 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        80,
+        -128,
         208
       ],
-      "id": "37e53745-64bb-47df-af48-50cf32a6d1ec",
+      "id": "6bacf686-5ab8-4f0e-86c3-706642542077",
       "name": "Google Gemini Chat Model",
       "credentials": {
         "googlePalmApi": {
-          "id": "lfd4P2NjkmQIOOIX",
-          "name": "foxtrot_agent"
+          "id": "tvo5P4AcOSMM65Cs",
+          "name": "Google Gemini(PaLM) Api account"
         }
       }
-    },
-    {
-      "parameters": {
-        "contextWindowLength": 8
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        -192,
-        160
-      ],
-      "id": "d4f6f4fc-c382-469e-b582-dc0c5026fa7d",
-      "name": "Simple Memory"
     },
     {
       "parameters": {
@@ -159,14 +74,14 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
       "typeVersion": 1.3,
       "position": [
-        416,
+        208,
         160
       ],
-      "id": "c4d364be-f211-4229-a53b-5172acb051d5",
+      "id": "3f88f1d7-077e-4475-a5aa-21db6934cd26",
       "name": "Pinecone Vector Store1",
       "credentials": {
         "pineconeApi": {
-          "id": "JS4gvyLCu4MxqByn",
+          "id": "vBWyTZCJj0o7FHuF",
           "name": "PineconeApi account"
         }
       }
@@ -183,10 +98,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -80,
+        -288,
         16
       ],
-      "id": "01c5e08a-0cc2-40d7-aaee-9e3c9890ca95",
+      "id": "f2a7195f-c7a5-4f11-bd21-34a71b9d1f88",
       "name": "Webhook",
       "webhookId": "de82c344-f9dd-466d-ae72-7fc7eedb5dc2"
     },
@@ -197,41 +112,15 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        688,
+        480,
         48
       ],
-      "id": "f71d0f99-95a0-4936-afa1-42e2fa44b43a",
+      "id": "d6d88b0e-6912-4207-98ef-eb7909d8deb9",
       "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
   "connections": {
-    "When chat message received": {
-      "main": [
-        []
-      ]
-    },
-    "Answer questions with a vector store": {
-      "ai_tool": [
-        []
-      ]
-    },
-    "Pinecone Vector Store": {
-      "ai_vectorStore": [
-        []
-      ]
-    },
-    "Google Gemini Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Answer questions with a vector store",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Embeddings HuggingFace Inference": {
       "ai_embedding": [
         [
@@ -252,11 +141,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Simple Memory": {
-      "ai_memory": [
-        []
       ]
     },
     "Pinecone Vector Store1": {
@@ -293,16 +177,17 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
+    "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "1d816080-ca76-40a5-9871-42bb04c01398",
+  "versionId": "047a965d-8948-4e8e-9981-cfedd77c2409",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "84477c8594e4e5fa1a85df07d16feed30068678c5643e6e958310722165b467f"
+    "instanceId": "4b236d6a0553c9e875e34c327be292e58e9d17db4065ace6cec462abff30df1b"
   },
-  "id": "7xLSFlFak83jPovGLDlxO",
+  "id": "n1Z0AWpb932xRPaI",
   "tags": []
 }
