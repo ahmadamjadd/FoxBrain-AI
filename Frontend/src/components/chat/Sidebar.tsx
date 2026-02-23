@@ -16,7 +16,6 @@ const Sidebar = () => {
     loadConversations();
   }, [loadConversations]);
 
-  // Close sidebar on mobile after selecting
   const handleSelect = (id: string) => {
     selectConversation(id);
     if (isMobile) setSidebarOpen(false);
@@ -26,7 +25,6 @@ const Sidebar = () => {
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🦊</span>
@@ -37,7 +35,6 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* New Chat */}
       <div className="px-3 pb-2">
         <button
           onClick={createConversation}
@@ -48,7 +45,6 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* Conversation list */}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 pb-2">
         {grouped.map(([label, convs]) => (
           <div key={label} className="mb-2">
@@ -67,7 +63,6 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* User section */}
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-2 mb-2">
           <button
@@ -132,7 +127,6 @@ const Sidebar = () => {
   );
 };
 
-// --- Conversation item ---
 function ConversationItem({
   conversation,
   isActive,
@@ -194,7 +188,6 @@ function ConversationItem({
   );
 }
 
-// --- Grouping ---
 function groupConversations(conversations: Conversation[]): [string, Conversation[]][] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

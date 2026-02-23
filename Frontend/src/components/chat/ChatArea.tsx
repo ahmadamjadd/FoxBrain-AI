@@ -27,7 +27,6 @@ const ChatArea = () => {
 
   return (
     <div className="flex flex-col h-full flex-1">
-      {/* Header */}
       <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-background/80 backdrop-blur-sm">
         {!sidebarOpen && (
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-muted transition-colors">
@@ -44,7 +43,6 @@ const ChatArea = () => {
         </button>
       </div>
 
-      {/* Messages */}
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto scrollbar-thin relative">
         {!activeConversationId ? (
           <EmptyState />

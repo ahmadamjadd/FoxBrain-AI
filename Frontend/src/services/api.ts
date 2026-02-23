@@ -1,13 +1,9 @@
 import { Conversation, Message } from "@/types/chat";
 import { supabase } from "@/lib/supabase";
 
-// TODO: Replace with your actual n8n webhook URL once deployed
 const N8N_WEBHOOK_URL = "https://foxbrain.teamfoxtrot.pk/webhook/de82c344-f9dd-466d-ae72-7fc7eedb5dc2";
-
-// Set to false once n8n is ready
 const USE_MOCK_AI = false;
 
-// --- Auth API ---
 export const authApi = {
   login: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -53,7 +49,6 @@ export const authApi = {
   },
 };
 
-// --- Conversations API ---
 export const conversationsApi = {
   getAll: async (): Promise<Conversation[]> => {
     const { data, error } = await supabase
@@ -103,11 +98,9 @@ export const conversationsApi = {
       .delete()
       .eq("id", id);
     if (error) throw error;
-    // Messages are auto-deleted via ON DELETE CASCADE
   },
 };
 
-// --- Messages API ---
 export const messagesApi = {
   getByConversation: async (conversationId: string): Promise<Message[]> => {
     const { data, error } = await supabase
@@ -125,7 +118,6 @@ export const messagesApi = {
     }));
   },
   send: async (conversationId: string, content: string): Promise<Message> => {
-    // 1. Save user message to Supabase
     const { error: userMsgError } = await supabase
       .from("messages")
       .insert({
@@ -135,7 +127,6 @@ export const messagesApi = {
       });
     if (userMsgError) throw userMsgError;
 
-    // 2. Fetch recent history for context
     const { data: history } = await supabase
       .from("messages")
       .select("role, content")
@@ -143,10 +134,9 @@ export const messagesApi = {
       .order("created_at", { ascending: false })
       .limit(10);
 
-    // 3. Get AI response (mock or real n8n)
     let aiContent: string;
     if (USE_MOCK_AI) {
-      await new Promise((r) => setTimeout(r, 1000)); // simulate delay
+      await new Promise((r) => setTimeout(r, 1000));
       aiContent = `🦊 **FoxBrain AI (Test Mode)**\n\nI received your message: "${content}"\n\nThis is a test response. Once n8n is connected, you'll get real AI answers here.`;
     } else {
       const res = await fetch(N8N_WEBHOOK_URL, {
@@ -162,7 +152,6 @@ export const messagesApi = {
       aiContent = aiData.output || aiData.response || "Sorry, I couldn't generate a response.";
     }
 
-    // 4. Save AI response to Supabase
     const { data: aiMsg, error: aiMsgError } = await supabase
       .from("messages")
       .insert({
@@ -174,7 +163,6 @@ export const messagesApi = {
       .single();
     if (aiMsgError) throw aiMsgError;
 
-    // 5. Auto-title the conversation if it's the first message
     const { data: conv } = await supabase
       .from("conversations")
       .select("title")

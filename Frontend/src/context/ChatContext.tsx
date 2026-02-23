@@ -38,7 +38,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkModeState] = useState(false);
 
-  // Listen to Supabase auth state changes
   useEffect(() => {
     const { data: { subscription } } = authApi.onAuthStateChange((supaUser: any) => {
       if (supaUser) {
@@ -139,7 +138,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const aiMsg = await messagesApi.send(activeConversationId, content);
       setMessages((prev) => [...prev, aiMsg]);
-      // Refresh conversations to get updated titles
       loadConversations();
     } catch {
       toast.error("Failed to send message");
