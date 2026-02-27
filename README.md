@@ -23,6 +23,7 @@
 - [Data Ingestion Pipeline](#-data-ingestion-pipeline)
   - [Parent Workflow](#parent-workflow--foxtrot_dataflow_parent)
   - [Child Workflow](#child-workflow--foxtrot_dataflow_child)
+  - [GrandChild Workflow](#grandchild-workflow--foxtrot_dataflow_grandchild)
   - [Google Drive Workflow](#google-drive-workflow--dataflow_googledrive)
 - [Deploying to Vercel](#-deploying-to-vercel-password-reset)
 - [Contributing](#-contributing)
@@ -114,7 +115,8 @@ SDES_Chatbot/
 │   ├── RAGAgent.json                         # RAG Agent (chat) workflow
 │   ├── Dataflow/
 │   │   ├── Foxtrot_DataFlow_Parent.json      # Parent orchestrator workflow
-│   │   ├── Foxtrot_DataFlow_Child.json       # Per-repo processing workflow
+│   │   ├── Foxtrot_DataFlow_Child.json       # Per-repo branch discovery workflow
+│   │   ├── Foxtrot_DataFlow_GrandChild.json  # Per-branch file processing workflow
 │   │   └── Dataflow_GoogleDrive.json         # Google Drive ingestion workflow
 │   └── *.png                                 # Workflow screenshots
 │
@@ -183,45 +185,73 @@ The **RAGAgent** workflow powers the FoxBrain AI chat interface. It receives use
 
 ## 🔄 Data Ingestion Pipeline
 
-The data pipeline is built using **n8n** workflows in a **Parent-Child architecture** to systematically crawl all repositories in the `Team-Foxtrot-GIKI` GitHub organization, extract relevant files, and embed them into the Pinecone vector database for retrieval by the RAG agent.
+The data pipeline is built using **n8n** workflows in a **Parent → Child → GrandChild architecture** to systematically crawl all repositories and **all branches** in the `Team-Foxtrot-GIKI` GitHub organization, extract relevant files, and embed them into the Pinecone vector database for retrieval by the RAG agent.
+
+### Why Three Workflows?
+
+The previous two-workflow architecture (Parent → Child) only fetched code from the **main branch** of each repository. This was a significant limitation because many repositories have active development branches containing important code changes, experimental features, and work-in-progress implementations that freshers need to understand.
+
+The new three-workflow architecture solves this by introducing a **Child workflow** that discovers all branches, and a **GrandChild workflow** that processes files from each specific branch:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         Data Ingestion Architecture                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────┐   │
+│   │   PARENT    │────▶│    CHILD    │────▶│         GRANDCHILD          │   │
+│   │ (List Repos)│     │(List Branch)│     │ (List Files → Filter → Embed)│   │
+│   └─────────────┘     └─────────────┘     └─────────────────────────────┘   │
+│         │                   │                          │                    │
+│         │ loops             │ loops                    │ processes          │
+│         │ repos             │ branches                 │ files              │
+│         ▼                   ▼                          ▼                    │
+│   [Repo A]             [main, dev,              [file1.py, file2.md,       │
+│   [Repo B]              feature-x]               config.yaml, ...]         │
+│   [Repo C]                                                                  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ### Parent Workflow — `Foxtrot_DataFlow_Parent`
 
-The orchestrator workflow that manages the entire ingestion process across all repositories.
+The top-level orchestrator that manages the entire ingestion process across all repositories.
 
-**Purpose:** Fetches all repositories from the GitHub organization and schedules them for processing.
+**Purpose:** Fetches all repositories from the GitHub organization and dispatches them to the Child workflow for branch discovery.
 
 **Flow:**
 ```
-Manual/Scheduled Trigger
-         │
-         ▼
+Manual Trigger
+      │
+      ▼
 Fetch All Repos (GitHub API)
-         │
-         ▼
+      │
+      ▼
 Loop Over Each Repository
-         │
-         ▼
-Call Child Workflow (per repo)
-         │
-         ▼
+      │
+      ▼
+Call Child Workflow (pass repo name)
+      │
+      ▼
    (repeat for all repos)
 ```
 
 **Key Features:**
-- Iterates through all repositories in `Team-Foxtrot-GIKI` organization
-- Calls the Child Workflow for each repository sequentially
-- Error handling with retry logic enabled
-- Returns summary of processed repositories
+- Lists all repositories in the `Team-Foxtrot-GIKI` organization
+- Iterates through repositories one-by-one using a batch loop
+- Passes repository name to Child workflow for branch discovery
+- Waits for Child workflow to complete before processing next repo
+- Retry logic enabled for reliability
 
 **Configuration:**
 | Property | Value |
 |---|---|
 | **Organization** | `Team-Foxtrot-GIKI` |
 | **Processing Mode** | Sequential (one repo at a time) |
-| **Child Workflow** | `Foxtrot_DataFlow_Child` |
-| **Error Handling** | Retry enabled with fallback |
-| **Est. Runtime** | ~5–10 minutes per repository |
+| **Calls Workflow** | `Foxtrot_DataFlow_Child` |
+| **Error Handling** | Retry enabled |
 
 <p align="center">
   <img src="Backend/foxtrot-dataflow-parent.png" alt="Foxtrot DataFlow Parent Workflow" width="800" />
@@ -231,42 +261,106 @@ Call Child Workflow (per repo)
 
 ### Child Workflow — `Foxtrot_DataFlow_Child`
 
-The worker workflow that processes a **single repository** end-to-end, from file discovery through vector embedding.
+The branch discovery workflow that acts as the **bridge** between Parent (repos) and GrandChild (files). This workflow ensures code from **all branches** gets processed, not just the main branch.
 
-**Purpose:** Extracts supported file types from a repository and embeds them into Pinecone.
+**Purpose:** Receives a repository name from Parent, discovers all branches in that repository, and dispatches each branch to the GrandChild workflow for file processing.
 
 **Flow:**
 ```
-Receive Repository Info
-         │
-         ▼
-List Repository Contents (GitHub API)
-         │
-         ▼
-    Branch by Type
-    │                  │
-    │ (Directories)    │ (Files)
-    ▼                  ▼
-Apply Dir Filter    Apply File Type Filter
-    │                  │
-    ▼                  ▼
-(Recurse)          Fetch File Content
-                        │
-                        ▼
-                   Embed into Pinecone
-                   (with metadata)
+Receive Repository Name (from Parent)
+              │
+              ▼
+Fetch All Branches (GitHub API)
+              │
+              ▼
+Loop Over Each Branch
+              │
+              ▼
+Format Payload (repo_name + branch_name)
+              │
+              ▼
+Call GrandChild Workflow
+              │
+              ▼
+       (repeat for all branches)
+```
+
+**Key Features:**
+- Receives repo name via workflow trigger input
+- Calls GitHub API to list all branches for the repository
+- Loops through branches one-by-one
+- Combines `repo_name` and `branch_name` into a single payload
+- Passes combined payload to GrandChild for file-level processing
+- Ensures multi-branch coverage in the vector database
+
+**Configuration:**
+| Property | Value |
+|---|---|
+| **Input** | Repository name from Parent |
+| **Output** | Calls GrandChild for each branch |
+| **Processing Mode** | Sequential (one branch at a time) |
+| **Calls Workflow** | `Foxtrot_DataFlow_GrandChild` |
+
+<p align="center">
+  <img src="Backend/foxtrot-dataflow-child.png" alt="Foxtrot DataFlow Child Workflow" width="800" />
+</p>
+
+---
+
+### GrandChild Workflow — `Foxtrot_DataFlow_GrandChild`
+
+The file processing workflow that handles the actual work of discovering files, fetching their content, and embedding them into Pinecone.
+
+**Purpose:** Receives a repository name and branch name, recursively lists all files, filters them by type, fetches raw content, and embeds into Pinecone with full metadata.
+
+**Flow:**
+```
+Receive Repo + Branch (from Child)
+              │
+              ▼
+List Directory Contents (GitHub API with ?ref=branch)
+              │
+              ▼
+        Route by Type
+        │            │
+        │ (dir)      │ (file)
+        ▼            ▼
+Dir Exclusion    File Type Filter
+    Filter       (.py .md .lua etc.)
+        │            │
+        ▼            ▼
+   (recurse)    Fetch Raw File Content
+                     │
+                     ▼
+              Buffer Metadata
+              (repo, branch, path, name)
+                     │
+                     ▼
+              Embed into Pinecone
+              (HuggingFace + metadata)
 ```
 
 **Processing Steps:**
 
-1. **Directory Traversal** — Recursively list all files in the repository
-2. **Directory Filtering** — Skip excluded directories to reduce noise
-3. **File Type Filtering** — Only process supported file extensions
-4. **Content Extraction** — Fetch file content from GitHub
-5. **Embedding & Storage** — Convert file content to embeddings using HuggingFace API and store in Pinecone
+1. **Directory Traversal** — Recursively lists all files in the repository for the specified branch using the `?ref=branch` query parameter
+2. **Routing** — Separates directories from files for different processing paths
+3. **Directory Filtering** — Excludes directories like `.git`, `node_modules`, `__pycache__`, etc.
+4. **File Type Filtering** — Only processes supported extensions (`.py`, `.md`, `.lua`, `.yaml`, etc.)
+5. **Content Fetching** — Uses `Accept: application/vnd.github.v3.raw` header to fetch raw file content from the specific branch
+6. **Metadata Buffering** — Injects `repo_name`, `branch_name`, `path`, and `name` into local JSON to prevent LangChain lineage issues
+7. **Embedding & Storage** — Converts content to embeddings via HuggingFace and stores in Pinecone with full metadata
+
+**Configuration:**
+| Property | Value |
+|---|---|
+| **Input** | `repo_name` + `branch_name` from Child |
+| **GitHub API** | Uses `?ref=branch_name` for branch-specific content |
+| **Embedding Model** | HuggingFace `sentence-transformers/all-MiniLM-L6-v2` |
+| **Vector Store** | Pinecone |
+| **Metadata Fields** | `repo`, `branch`, `filePath`, `fileName`, `fileExtension`, `source` |
 
 <p align="center">
-  <img src="Backend/foxtrot-dataflow-child.png" alt="Foxtrot DataFlow Child Workflow" width="800" />
+  <img src="Backend/foxtrot-dataflow-GrandChild.png" alt="Foxtrot DataFlow GrandChild Workflow" width="800" />
 </p>
 
 ---
@@ -328,18 +422,25 @@ The pipeline processes the following file types to build the knowledge base:
 ### Vector Storage Configuration
 
 **Database:** Pinecone  
-**Index Name:** `foxtrot`  
-**Namespace Strategy:** One namespace per repository (e.g., `autopilot`, `mission-planner`)  
-**Embedding Model:** HuggingFace Inference API  
-**Document Metadata:** File name, repository, file type, and content
+**Index Name:** `test`  
+**Embedding Model:** HuggingFace Inference API (`sentence-transformers/all-MiniLM-L6-v2`)
 
-Each embedded document includes:
-- Original file content
-- File path and repository name
-- File type and extension
-- Timestamp of ingestion
+Each embedded document includes the following metadata:
 
-This enables the RAG agent to retrieve relevant code snippets with full context.
+| Metadata Field | Description | Example |
+|---|---|---|
+| `repo` | Repository name | `autopilot` |
+| `branch` | Branch name | `main`, `develop`, `feature-gps` |
+| `filePath` | Full path to file | `src/controllers/pid.py` |
+| `fileName` | File name only | `pid.py` |
+| `fileExtension` | Extension | `py` |
+| `source` | GitHub URL to file | `https://github.com/Team-Foxtrot-GIKI/autopilot/blob/develop/src/controllers/pid.py` |
+
+This comprehensive metadata enables the RAG agent to:
+- Retrieve code from specific branches when relevant
+- Provide direct links to source files on GitHub
+- Filter results by repository, branch, or file type
+- Give freshers full context about where the code lives
 
 ---
 

@@ -1,0 +1,620 @@
+{
+  "name": "Foxtrot_DataFlow_GrandChild",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        496
+      ],
+      "id": "838e9c56-3862-492d-90f9-01a2ea10ea11",
+      "name": "Execute Workflow Trigger"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "dir",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "82b0637f-4300-49a8-9efe-7aa7841701cb"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "aa453e0c-1935-4825-b284-b1aec4e33ecd",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "file",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        704,
+        432
+      ],
+      "id": "99a0f8c2-efe5-4808-b7f1-f54c2f587cd4",
+      "name": "Route by Type"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b0ce430b-49c1-47ab-be92-2bf19aec00ea",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "^(\\.git|\\.venv|__pycache__|site-packages|node_modules|dist-info|PackageCache|Artifacts|Logs|UserSettings|assets|Plugins|Library|mavlink|\\.github)$",
+              "operator": {
+                "type": "string",
+                "operation": "notRegex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        864,
+        592
+      ],
+      "id": "fe20838b-bc0f-45c4-8d79-d1aa5d54b367",
+      "name": "Dir Exclusion Filter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5a03d019-e684-41b1-9441-1f463ec0131f",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "^(?!.*(\\/Library\\/|\\/\\.git\\/|\\/\\.venv\\/|\\/__pycache__\\/|\\/site-packages\\/|\\/node_modules\\/|\\/dist-info\\/|\\/PackageCache\\/|\\/Artifacts\\/|\\/Logs\\/|\\/UserSettings\\/|\\/assets\\/|\\/Assets\\/Plugins\\/|mavlink)).*\\.(py|md|lua|txt|yaml|yml|ipynb|waypoints)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        992,
+        368
+      ],
+      "id": "0160078d-4afb-48f6-bba5-9734817d4dfe",
+      "name": "File Type Filter"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test",
+          "mode": "list",
+          "cachedResultName": "test"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        368
+      ],
+      "id": "080331a2-c901-4b55-8094-3e505915dc1b",
+      "name": "Pinecone Vector Store",
+      "notesInFlow": false,
+      "credentials": {
+        "pineconeApi": {
+          "id": "JS4gvyLCu4MxqByn",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "sentence-transformers/all-MiniLM-L6-v2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        576
+      ],
+      "id": "771a8f98-3a8e-49c1-b1f7-99185e611d5d",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "1rngl2euAMMxLRF0",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "repo",
+                "value": "={{ $json.repo_name }}"
+              },
+              {
+                "name": "branch",
+                "value": "={{ $json.branch_name }}"
+              },
+              {
+                "name": "filePath",
+                "value": "={{ $json.path }}"
+              },
+              {
+                "name": "fileName",
+                "value": "={{ $json.name }}"
+              },
+              {
+                "name": "fileExtension",
+                "value": "={{ $json.name.split('.').pop() }}"
+              },
+              {
+                "name": "source:",
+                "value": "=https://github.com/Team-Foxtrot-GIKI/{{ $json.repo_name }}/blob/{{ $json.branch_name }}/{{ $json.path }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        576
+      ],
+      "id": "510c172f-a84e-4cc2-8253-93560a7dfec4",
+      "name": "Document Loader",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Setup\nReceives repo and branch from Child. Uses HTTP Request with 'Accept' headers to fetch raw code. Uses Edit Fields to bypass LangChain lineage bugs.",
+        "height": 132,
+        "width": 428
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        16,
+        64
+      ],
+      "id": "c1b4eef4-d674-4531-8b54-487709d1cac4",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Entry\nReceives repo object. Key: json.name",
+        "height": 112,
+        "width": 244
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        352
+      ],
+      "id": "18afe124-1626-4285-b6d7-32b717a397a7",
+      "name": "Note: Entry Point"
+    },
+    {
+      "parameters": {
+        "content": "### List Directory\nCalls the GitHub API to list all files and folders at the current path. Recurses into directories until only files are left to be passed to the filter.",
+        "height": 144,
+        "width": 232
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        384,
+        320
+      ],
+      "id": "cea98863-c81c-4d6e-891a-4dea22459e2e",
+      "name": "Note: List Contents"
+    },
+    {
+      "parameters": {
+        "content": "## Route\ndir → Filter → loop back. file → embed path.",
+        "height": 112,
+        "width": 204
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        288
+      ],
+      "id": "86374091-dd69-4ea1-bf8e-1542bc88fc54",
+      "name": "Note: Route"
+    },
+    {
+      "parameters": {
+        "content": "## File Filter\n.py .md .lua .txt .yaml .ipynb .waypoints",
+        "height": 96,
+        "width": 184
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        944,
+        240
+      ],
+      "id": "ff7deba4-e71b-43ca-a713-c147f263e806",
+      "name": "Note: File Filter"
+    },
+    {
+      "parameters": {
+        "content": "### Fetch Raw Code\nUses the 'application/vnd.github.v3.raw' header to download the pure text of the file from the specific branch. This output is then fed into the metadata buffer.",
+        "height": 176,
+        "width": 228
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        176
+      ],
+      "id": "c020671d-9f94-4e9d-a906-c610b62836b0",
+      "name": "Note: Fetch"
+    },
+    {
+      "parameters": {
+        "content": "## Embed\nPinecone insert. Namespace = repo name.",
+        "height": 112,
+        "width": 248
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        224
+      ],
+      "id": "cc52a2c8-1144-4409-adbd-d4f819fa0266",
+      "name": "Note: Embed & Store"
+    },
+    {
+      "parameters": {
+        "content": "## Dir Filter\nBlocks .git .venv node_modules etc. Survivors → List (recurse).",
+        "height": 128,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        704
+      ],
+      "id": "0cd0a791-f043-44a7-ace5-ddf54e11009e",
+      "name": "Note: Dir Recursion"
+    },
+    {
+      "parameters": {
+        "content": "### AI\nHuggingFace embeddings. Document Loader -> JSON Property: data. Metadata uses local $json only.",
+        "height": 128,
+        "width": 236
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        720
+      ],
+      "id": "15c4f642-7858-402a-82ae-b9843239c49c",
+      "name": "Note: AI Components"
+    },
+    {
+      "parameters": {
+        "content": "## Supported Types\n.py .md .md .lua .txt .yaml .ipynb .waypoints",
+        "height": 96,
+        "width": 268
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        560
+      ],
+      "id": "6778c73f-cbe9-4008-bee3-be3354615412",
+      "name": "Note: File Types"
+    },
+    {
+      "parameters": {
+        "content": "### Data Buffer\nInjects repo, branch, and path into the local JSON. This prevents the Document Loader from crashing when trying to reach back to the trigger.",
+        "height": 144,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1456,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "428f8a69-c434-461f-92d9-ebb5834d8936",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/Team-Foxtrot-GIKI/{{ $('Execute Workflow Trigger').first().json.repo_name }}/contents/{{ $json.path || '' }}?ref={{ $('Execute Workflow Trigger').first().json.branch_name }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        496
+      ],
+      "id": "7bee03c8-b79f-4b66-b659-8a8866eef387",
+      "name": "List Directory Contents",
+      "credentials": {
+        "githubApi": {
+          "id": "5hlVXiIYuzDQjW7T",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/Team-Foxtrot-GIKI/{{ $('Execute Workflow Trigger').first().json.repo_name }}/contents/{{ $json.path }}?ref={{ $('Execute Workflow Trigger').first().json.branch_name }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3.raw"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        368
+      ],
+      "id": "0f536c2a-9e79-43e0-8dcd-0f6dc1806c37",
+      "name": "Fetch Raw File Content",
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "5hlVXiIYuzDQjW7T",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b6da7b9-1e7c-44e9-9694-c4fac9f43292",
+              "name": "repo_name",
+              "value": "={{ $('Execute Workflow Trigger').first().json.repo_name }}",
+              "type": "string"
+            },
+            {
+              "id": "eb314558-4fa0-404d-953f-a744b9af81b9",
+              "name": "branch_name",
+              "value": "={{ $('Execute Workflow Trigger').first().json.branch_name }}",
+              "type": "string"
+            },
+            {
+              "id": "3fe90ced-273c-4303-bf89-cadbeb60dbcd",
+              "name": "path",
+              "value": "={{ $('File Type Filter').item.json.path }}",
+              "type": "string"
+            },
+            {
+              "id": "f4b93d1e-85d1-449d-bcf1-2487a8615f5d",
+              "name": "name",
+              "value": "={{ $('File Type Filter').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1520,
+        368
+      ],
+      "id": "d817be7e-27c7-42fb-b433-d643d989b5c0",
+      "name": "Buffer Metadata for AI"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Route by Type": {
+      "main": [
+        [
+          {
+            "node": "Dir Exclusion Filter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Type Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "List Directory Contents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Type Filter": {
+      "main": [
+        [
+          {
+            "node": "Fetch Raw File Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dir Exclusion Filter": {
+      "main": [
+        [
+          {
+            "node": "List Directory Contents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Directory Contents": {
+      "main": [
+        [
+          {
+            "node": "Route by Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Raw File Content": {
+      "main": [
+        [
+          {
+            "node": "Buffer Metadata for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buffer Metadata for AI": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5f401bd5-fbf3-4ae4-af40-134716acfb26",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84477c8594e4e5fa1a85df07d16feed30068678c5643e6e958310722165b467f"
+  },
+  "id": "Vm61LRn7RSNHhNneapmX2",
+  "tags": []
+}
